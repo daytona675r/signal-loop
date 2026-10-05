@@ -1,0 +1,124 @@
+{
+  "completed": true,
+  "started_at": "2026-10-05T21:17:58.565563+00:00",
+  "finished_at": "2026-10-05T21:17:59.205740+00:00",
+  "base_url": "http://localhost:8000",
+  "simulated_data": true,
+  "records": {
+    "hypothesis_id": "e6d7b56b-79bb-4081-b003-8a5f87383159",
+    "version_1_id": "3fec1936-aacb-4401-8359-69840f4efe4d",
+    "version_2_id": "80893967-aa41-4d06-8d9d-12f247f280aa",
+    "experiment_id": "d140c7db-d814-49e0-83c7-46ab80775d0b",
+    "decision_id": "ce168e1c-b880-4b1a-9fa9-6ce2ec060161",
+    "integrity_fixture_hypothesis_id": "2d8e117c-9b8f-47c7-8ad0-5039a990acf1",
+    "agent_run_id": "fd25f6ee-12ca-4638-9d68-e918fcc9fafe",
+    "human_review_id": "4c4e08fa-6324-49b5-95ee-4890c4b6b3eb"
+  },
+  "checks": [
+    {
+      "check": "Database-backed health endpoint",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "OpenAPI exposes versions, decisions, reviews and runs",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "v1 remains EUR 449; v2 is EUR 349",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "Current version is v2; final state is RESEARCH",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "Eight ordered history entries preserve the lifecycle",
+      "passed": true,
+      "details": [
+        "DRAFT",
+        "FEASIBILITY",
+        "RESEARCH",
+        "READY_FOR_EXPERIMENT",
+        "EXPERIMENT",
+        "EVALUATION",
+        "ITERATION",
+        "RESEARCH"
+      ]
+    },
+    {
+      "check": "Original experiment still tests v1",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "Evidence retains its source and tested version",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "Three simulated observations remain distinct from assumptions",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "Decision cites evidence/signals and explains v2",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "Skipping from RESEARCH to VALIDATED returns 409",
+      "passed": true,
+      "details": {
+        "detail": "Invalid transition: RESEARCH -> VALIDATED"
+      }
+    },
+    {
+      "check": "Rejected decision leaves decisions and history unchanged",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "No version overwrite endpoint; v1 stays unchanged",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "Unknown source cannot create evidence",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "Timezone-less event rejected; no additional signal",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "Another hypothesis's version cannot receive this hypothesis's evidence",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "Provider-neutral run snapshot is retrievable",
+      "passed": true,
+      "details": {
+        "submitted_cost": "0",
+        "stored_cost": "0.000000"
+      }
+    },
+    {
+      "check": "Human review retains reviewer and concrete target",
+      "passed": true,
+      "details": null
+    },
+    {
+      "check": "Interpretation/review did not create market signals or change state",
+      "passed": true,
+      "details": null
+    }
+  ],
+  "passed_checks": 18
+}

@@ -102,6 +102,10 @@ Version fields are full snapshots, not patches. Evidence and experiment creation
 
 Decisions use lowercase values (`continue`, `iterate`, `pause`, `reject`, `validate`). State values are uppercase. State-changing decisions atomically perform the corresponding valid transition; `continue` records rationale without changing state. Supply `originating_decision_id` when creating a later version to preserve the iteration link.
 
+## Review and live demonstration
+
+See the [review briefing](docs/foundation-review.md) for a 12-minute walkthrough, live inspection links, current results and limitations. Run `python scripts/review_demo.py --pause` for the narrated API demonstration. All generated business observations are simulated.
+
 ## Design and development
 
 - [Architecture and scope](docs/architecture.md)
