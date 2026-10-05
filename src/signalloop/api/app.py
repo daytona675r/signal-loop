@@ -19,7 +19,7 @@ app = FastAPI(
     description="Manual hypothesis validation. Assumptions, evidence, observations and decisions "
     "remain distinct. No autonomous execution or authentication.",
 )
-Database = Annotated[Session, Depends(get_session)]
+Database = Annotated[Session, Depends(get_session, scope="function")]
 
 
 def service(session: Database):

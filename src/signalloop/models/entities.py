@@ -230,9 +230,12 @@ class TransitionHistory(Identity, Provenance, Base):
     hypothesis_version_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), index=True)
     from_state: Mapped[State | None] = mapped_column(enum_type(State, "from_state"))
     to_state: Mapped[State] = mapped_column(enum_type(State, "to_state"))
+    sequence_no: Mapped[int]
     reason: Mapped[str] = mapped_column(Text)
     decision_id: Mapped[uuid.UUID | None] = fk("decision_log.id")
     __table_args__ = (
+        UniqueConstraint("hypothesis_id", "sequence_no", name="uq_history_sequence"),
+        CheckConstraint("sequence_no > 0", name="positive_sequence"),
         ForeignKeyConstraint(
             ["hypothesis_id", "hypothesis_version_id"],
             ["hypothesis_version.hypothesis_id", "hypothesis_version.id"],

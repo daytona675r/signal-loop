@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from signalloop.domain.states import DECISION_TARGETS, DomainError, State, validate_transition
@@ -61,6 +61,7 @@ class Backbone:
                 from_state=None,
                 to_state=State.DRAFT,
                 reason="Hypothesis created",
+                sequence_no=1,
                 **provenance(payload),
             )
         )
@@ -112,6 +113,14 @@ class Backbone:
 
     def _transition(self, hypothesis, target, reason, actor, decision_id=None):
         validate_transition(hypothesis.status, target)
+        sequence_no = (
+            self.session.scalar(
+                select(func.max(m.TransitionHistory.sequence_no)).where(
+                    m.TransitionHistory.hypothesis_id == hypothesis.id
+                )
+            )
+            + 1
+        )
         previous = hypothesis.status
         hypothesis.status = target
         hypothesis.updated_at = datetime.now(UTC)
@@ -119,6 +128,7 @@ class Backbone:
             m.TransitionHistory(
                 hypothesis_id=hypothesis.id,
                 hypothesis_version_id=hypothesis.current_version_id,
+                sequence_no=sequence_no,
                 from_state=previous,
                 to_state=target,
                 reason=reason,
@@ -132,10 +142,16 @@ class Backbone:
         self.check_provenance(payload)
         return self._transition(hypothesis, payload.target_state, payload.reason, payload)
 
-    def history(self, hypothesis_id, **page):
+    def history(self, hypothesis_id, limit=100, offset=0):
         self.store.require(m.Hypothesis, hypothesis_id)
-        return self.store.list(
-            m.TransitionHistory, m.TransitionHistory.hypothesis_id == hypothesis_id, **page
+        return list(
+            self.session.scalars(
+                select(m.TransitionHistory)
+                .where(m.TransitionHistory.hypothesis_id == hypothesis_id)
+                .order_by(m.TransitionHistory.sequence_no)
+                .limit(limit)
+                .offset(offset)
+            )
         )
 
     def create_source(self, payload: c.SourceCreate):

@@ -90,6 +90,7 @@ class TransitionCreate(Provenance):
 
 
 class HistoryRead(Record, Provenance):
+    sequence_no: int
     hypothesis_id: UUID
     hypothesis_version_id: UUID
     from_state: State | None

@@ -453,3 +453,131 @@ def test_migration_matches_models(engine):
     assert set(inspect(engine).get_table_names()) == set(m.Base.metadata.tables) | {
         "alembic_version"
     }
+
+
+@pytest.mark.parametrize(
+    "path,target",
+    [
+        (["FEASIBILITY"], "PAUSED"),
+        (["FEASIBILITY"], "REJECTED"),
+        (["FEASIBILITY", "RESEARCH"], "ITERATION"),
+        (["FEASIBILITY", "RESEARCH"], "PAUSED"),
+        (["FEASIBILITY", "RESEARCH"], "REJECTED"),
+        (
+            ["FEASIBILITY", "RESEARCH", "READY_FOR_EXPERIMENT", "EXPERIMENT", "EVALUATION"],
+            "VALIDATED",
+        ),
+        (["FEASIBILITY", "RESEARCH", "READY_FOR_EXPERIMENT", "EXPERIMENT", "EVALUATION"], "PAUSED"),
+        (
+            ["FEASIBILITY", "RESEARCH", "READY_FOR_EXPERIMENT", "EXPERIMENT", "EVALUATION"],
+            "REJECTED",
+        ),
+    ],
+)
+def test_state_branches_are_persisted(client, hypothesis, path, target):
+    for state in path:
+        move(client, hypothesis["id"], state)
+    row = move(client, hypothesis["id"], target)
+    assert row["from_state"] == path[-1]
+    assert row["to_state"] == target
+    root = f"/hypotheses/{hypothesis['id']}"
+    assert client.get(root).json()["status"] == target
+    assert client.get(root + "/history").json()[-1] == row
+    if target in {"PAUSED", "REJECTED", "VALIDATED"}:
+        assert (
+            client.post(
+                root + "/transition",
+                json={
+                    "target_state": "RESEARCH",
+                    "reason": "No resume rule in v0.1",
+                },
+            ).status_code
+            == 409
+        )
+
+
+def test_duplicate_concurrent_transition_has_single_history(engine, hypothesis):
+    from signalloop.domain.states import DomainError
+    from signalloop.schemas.contracts import TransitionCreate
+
+    def transition(_):
+        try:
+            with Session(engine) as session, session.begin():
+                Backbone(session).transition(
+                    hypothesis["id"],
+                    TransitionCreate(
+                        target_state="FEASIBILITY",
+                        reason="Concurrent request",
+                    ),
+                )
+            return "ok"
+        except DomainError:
+            return "conflict"
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        assert sorted(executor.map(transition, range(2))) == ["conflict", "ok"]
+    with Session(engine) as session:
+        history = Backbone(session).history(hypothesis["id"])
+        assert len(history) == 2
+
+
+def test_failed_provenance_leaves_no_new_version(client, hypothesis, hypothesis_payload):
+    root = f"/hypotheses/{hypothesis['id']}"
+    assert (
+        client.post(
+            root + "/versions",
+            json={
+                **hypothesis_payload["version"],
+                "agent_run_id": str(uuid4()),
+            },
+        ).status_code
+        == 404
+    )
+    assert len(client.get(root + "/versions").json()) == 1
+    assert client.get(root).json()["current_version_id"] == hypothesis["current_version_id"]
+
+
+def test_signal_validation(client, hypothesis):
+    experiment = post(
+        client,
+        f"/hypotheses/{hypothesis['id']}/experiments",
+        {
+            "name": "Test",
+            "objective": "Observe",
+            "channel": "manual",
+            "success_criteria": "One reply",
+        },
+    )
+    path = f"/experiments/{experiment['id']}/signals"
+    assert client.post(path, json={"signal_type": "email_submit"}).status_code == 422
+    assert (
+        client.post(
+            path,
+            json={
+                "signal_type": "email_submit",
+                "observation": "Observed form submission",
+                "occurred_at": "2026-01-01T10:00:00",  # No timezone.
+            },
+        ).status_code
+        == 422
+    )
+    assert client.get(path).json() == []
+
+
+def test_history_order_with_multiple_transitions_in_one_transaction(engine, hypothesis):
+    from signalloop.schemas.contracts import TransitionCreate
+
+    with Session(engine) as session, session.begin():
+        svc = Backbone(session)
+        for state in ("FEASIBILITY", "RESEARCH", "ITERATION", "RESEARCH"):
+            svc.transition(hypothesis["id"], TransitionCreate(target_state=state, reason="Manual"))
+    with Session(engine) as session:
+        history = Backbone(session).history(hypothesis["id"])
+        assert [row.sequence_no for row in history] == [1, 2, 3, 4, 5]
+        assert [row.to_state.value for row in history] == [
+            "DRAFT",
+            "FEASIBILITY",
+            "RESEARCH",
+            "ITERATION",
+            "RESEARCH",
+        ]
