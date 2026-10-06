@@ -25,3 +25,9 @@ docker compose exec -T api python -m signalloop.research --version VERSION_UUID 
 ```
 
 The CLI prints the validated result and run ID as JSON; errors exit nonzero and include the durable run ID when available. Network tests use `httpx.MockTransport` against the real adapter, not another channel implementation. CI never depends on the external API being online.
+
+## Version-bound persistence (#7)
+
+Every normalized comment produces one Source (canonical URL, external ID, capture time, content hash and capture metadata) and one Evidence record containing the factual excerpt. Both carry `created_by_type=agent`, `created_by=research-worker-v0.2` and the originating run FK. Evidence stance is `unknown`, with explicitly unassessed relevance; text search is not a relevance assessment or an LLM conclusion.
+
+The requested version is retained even if another transaction creates v2 during collection. All source/evidence inserts, their IDs in the output snapshot, and run success commit atomically. A failure after a source or evidence insert rolls them back while the separately recorded run becomes failed. An empty search creates neither sources nor evidence. Repeating a command creates a new run and fresh records; there is no hidden retry or deduplication policy. No Signals, Decisions, Experiments or state transitions are created.

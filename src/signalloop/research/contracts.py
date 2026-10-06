@@ -33,5 +33,7 @@ class ResearchResult(Contract):
     agent_run_id: UUID | None = None
     hypothesis_version_id: UUID
     source_type: Literal["hacker_news_comment"] = "hacker_news_comment"
+    source_ids: list[UUID] = Field(default_factory=list)
+    evidence_ids: list[UUID] = Field(default_factory=list)
     skipped_items: Annotated[int, Field(ge=0)] = 0
     materials: list[SourceMaterial] = Field(default_factory=list, max_length=20)
