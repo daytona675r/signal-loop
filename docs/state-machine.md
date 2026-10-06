@@ -55,3 +55,9 @@ create v1 + DRAFT
 ```
 
 A new version changes the current pointer, not the state. The graph intentionally has no pause/resume rule because none was specified. Adding one later requires a deliberate policy decision and tests. New state names also require an Alembic migration for database check constraints; changing only edges requires code/tests, not a database migration. Historical rows are never rewritten to match a newer graph.
+
+## Originating decision validation
+
+A supplied `originating_decision_id` must identify an `iterate` decision of the same hypothesis whose `from_version_id` is the current version. The hypothesis must still be in `ITERATION`, and that decision must be the one attached to the latest transition into this iteration. An older decision cannot be reused after returning to research and entering a later iteration, even if the version has not changed. Non-iteration decisions and already-consumed origins are rejected with `422` before inserting a version or moving the current pointer.
+
+The origin remains optional: manually creating a version without a decision link is still allowed. A missing decision ID returns `404`. No schema migration or rewriting of existing historical links is performed.

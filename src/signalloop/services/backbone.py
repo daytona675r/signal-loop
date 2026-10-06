@@ -4,7 +4,13 @@ from uuid import uuid4
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from signalloop.domain.states import DECISION_TARGETS, DomainError, State, validate_transition
+from signalloop.domain.states import (
+    DECISION_TARGETS,
+    Decision,
+    DomainError,
+    State,
+    validate_transition,
+)
 from signalloop.models import entities as m
 from signalloop.repositories.store import Store
 from signalloop.schemas import contracts as c
@@ -75,6 +81,22 @@ class Backbone:
             decision = self.store.require(m.DecisionLog, payload.originating_decision_id)
             if decision.hypothesis_id != hypothesis.id:
                 raise DomainError("Decision belongs to a different hypothesis", 422)
+            if decision.decision != Decision.iterate:
+                raise DomainError("Originating decision must be an iterate decision", 422)
+            if decision.from_version_id != current.id:
+                raise DomainError("Originating decision must refer to the current version", 422)
+            if hypothesis.status != State.ITERATION:
+                raise DomainError("An originating decision requires the ITERATION state", 422)
+            latest_transition = self.session.scalar(
+                select(m.TransitionHistory)
+                .where(m.TransitionHistory.hypothesis_id == hypothesis.id)
+                .order_by(m.TransitionHistory.sequence_no.desc())
+                .limit(1)
+            )
+            if latest_transition is None or latest_transition.decision_id != decision.id:
+                raise DomainError(
+                    "Originating decision must have started the current iteration", 422
+                )
         version = self.store.add(
             m.HypothesisVersion(
                 hypothesis_id=hypothesis.id,

@@ -100,7 +100,7 @@ Create a hypothesis and v1 in one transaction:
 
 Version fields are full snapshots, not patches. Evidence and experiment creation default to the current version, or accept an explicit `hypothesis_version_id`. Earlier-version records remain accessible after iteration.
 
-Decisions use lowercase values (`continue`, `iterate`, `pause`, `reject`, `validate`). State values are uppercase. State-changing decisions atomically perform the corresponding valid transition; `continue` records rationale without changing state. Supply `originating_decision_id` when creating a later version to preserve the iteration link.
+Decisions use lowercase values (`continue`, `iterate`, `pause`, `reject`, `validate`). State values are uppercase. State-changing decisions atomically perform the corresponding valid transition; `continue` records rationale without changing state. Supply `originating_decision_id` when creating a later version to preserve the iteration link. That decision must be the `iterate` decision for the current version that started the current `ITERATION`; unrelated, stale or reused origins return `422`.
 
 ## Review and live demonstration
 

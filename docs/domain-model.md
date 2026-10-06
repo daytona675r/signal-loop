@@ -51,3 +51,9 @@ All entity IDs use PostgreSQL UUIDs. Entity `created_at` fields and event timest
 JSONB is limited to Source metadata, Evidence structured facts, Signal raw payload, and AgentRun input/output snapshots. Criteria, prices, states and relationships remain normal columns. URLs are optional (interviews/manual observations may have none); supplied URLs must use HTTP(S). Source hashes/external IDs are not globally unique: recaptures and platform scopes may differ.
 
 No Prospect, Outreach, Channel, vector store, embedding, or interpretation subsystem is implemented. Add those deliberately when a real worker or experiment needs them.
+
+## Originating decision validation
+
+A supplied `originating_decision_id` must identify an `iterate` decision of the same hypothesis whose `from_version_id` is the current version. The hypothesis must still be in `ITERATION`, and that decision must be the one attached to the latest transition into this iteration. An older decision cannot be reused after returning to research and entering a later iteration, even if the version has not changed. Non-iteration decisions and already-consumed origins are rejected with `422` before inserting a version or moving the current pointer.
+
+The origin remains optional: manually creating a version without a decision link is still allowed. A missing decision ID returns `404`. No schema migration or rewriting of existing historical links is performed.
