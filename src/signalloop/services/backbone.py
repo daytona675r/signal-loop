@@ -8,11 +8,13 @@ from signalloop.domain.states import (
     DECISION_TARGETS,
     Decision,
     DomainError,
+    RunStatus,
     State,
     validate_transition,
 )
 from signalloop.models import entities as m
 from signalloop.repositories.store import Store
+from signalloop.research.constants import ROLE, RUN_TYPE
 from signalloop.schemas import contracts as c
 
 
@@ -309,5 +311,12 @@ class Backbone:
         }
         for field, model in targets.items():
             if identifier := getattr(payload, field):
-                self.store.require(model, identifier)
+                target = self.store.require(model, identifier)
+                if (
+                    model is m.AgentRun
+                    and target.agent_role == ROLE
+                    and target.run_type == RUN_TYPE
+                    and target.status != RunStatus.succeeded
+                ):
+                    raise DomainError("Research must succeed before human review", 409)
         return self.store.add(m.HumanReview(**payload.model_dump()))

@@ -6,7 +6,8 @@ from uuid import UUID
 from pydantic import Field, HttpUrl
 from pydantic.types import AwareDatetime
 
-from signalloop.schemas.contracts import Contract, Short, Text, VersionRead
+from signalloop.domain.states import ReviewDecision
+from signalloop.schemas.contracts import AgentRunRead, Contract, Short, Text, VersionRead
 
 
 class ResearchCommand(Contract):
@@ -29,7 +30,12 @@ class SourceMaterial(Contract):
     metadata: dict = Field(default_factory=dict)
 
 
+class ReviewTarget(Contract):
+    agent_run_id: UUID
+
+
 class ResearchResult(Contract):
+    review_target: ReviewTarget | None = None
     agent_run_id: UUID | None = None
     hypothesis_version_id: UUID
     source_type: Literal["hacker_news_comment"] = "hacker_news_comment"
@@ -37,3 +43,10 @@ class ResearchResult(Contract):
     evidence_ids: list[UUID] = Field(default_factory=list)
     skipped_items: Annotated[int, Field(ge=0)] = 0
     materials: list[SourceMaterial] = Field(default_factory=list, max_length=20)
+
+
+class ResearchRunRead(AgentRunRead):
+    review_status: Literal["not_ready", "awaiting_review", "reviewed"]
+    review_target: ReviewTarget | None
+    review_ids: list[UUID]
+    latest_review_decision: ReviewDecision | None

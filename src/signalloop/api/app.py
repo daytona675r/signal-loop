@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 from signalloop.db.session import get_session
 from signalloop.domain.states import DomainError
 from signalloop.models import entities as m
+from signalloop.research.contracts import ResearchRunRead
+from signalloop.research.review import ResearchReviews
 from signalloop.schemas import contracts as c
 from signalloop.services.backbone import Backbone
 
@@ -242,3 +244,18 @@ def reviews(svc: Service, page: Page):
 @app.get("/human-reviews/{review_id}", response_model=c.HumanReviewRead, tags=["Human reviews"])
 def review(review_id: UUID, svc: Service):
     return svc.store.require(m.HumanReview, review_id)
+
+
+@app.get("/research-runs", response_model=list[ResearchRunRead], tags=["Research"])
+def research_runs(
+    session: Database,
+    page: Page,
+    hypothesis_version_id: UUID | None = None,
+    awaiting_review: bool = False,
+):
+    return ResearchReviews(session).list(hypothesis_version_id, awaiting_review, **page)
+
+
+@app.get("/research-runs/{run_id}", response_model=ResearchRunRead, tags=["Research"])
+def research_run(run_id: UUID, session: Database):
+    return ResearchReviews(session).read(run_id)

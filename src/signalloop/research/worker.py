@@ -11,12 +11,15 @@ from sqlalchemy.orm import Session
 from signalloop.domain.states import DomainError, RunStatus
 from signalloop.models.entities import AgentRun, HypothesisVersion
 from signalloop.repositories.store import Store
-from signalloop.research.contracts import ResearchCommand, ResearchInput, ResearchResult
+from signalloop.research.constants import ROLE, RUN_TYPE
+from signalloop.research.contracts import (
+    ResearchCommand,
+    ResearchInput,
+    ResearchResult,
+    ReviewTarget,
+)
 from signalloop.schemas.contracts import EvidenceCreate, SourceCreate, VersionRead
 from signalloop.services.backbone import Backbone
-
-ROLE = "research-worker-v0.2"
-RUN_TYPE = "hacker_news_research"
 
 
 class ResearchFailed(DomainError):
@@ -88,6 +91,7 @@ class ResearchWorker:
             )
             result.source_ids.append(source.id)
             result.evidence_ids.append(evidence.id)
+        result.review_target = ReviewTarget(agent_run_id=run.id)
         run.output_snapshot = result.model_dump(mode="json")
         run.status = RunStatus.succeeded
 

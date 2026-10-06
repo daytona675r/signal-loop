@@ -31,3 +31,16 @@ The CLI prints the validated result and run ID as JSON; errors exit nonzero and 
 Every normalized comment produces one Source (canonical URL, external ID, capture time, content hash and capture metadata) and one Evidence record containing the factual excerpt. Both carry `created_by_type=agent`, `created_by=research-worker-v0.2` and the originating run FK. Evidence stance is `unknown`, with explicitly unassessed relevance; text search is not a relevance assessment or an LLM conclusion.
 
 The requested version is retained even if another transaction creates v2 during collection. All source/evidence inserts, their IDs in the output snapshot, and run success commit atomically. A failure after a source or evidence insert rolls them back while the separately recorded run becomes failed. An empty search creates neither sources nor evidence. Repeating a command creates a new run and fresh records; there is no hidden retry or deduplication policy. No Signals, Decisions, Experiments or state transitions are created.
+
+## Mandatory human-review boundary (#8)
+
+A successful output includes `review_target: {"agent_run_id": "..."}`. The AgentRun itself is the persisted review target; the worker does **not** insert a HumanReview with an invented human decision. This preserves the existing exactly-one-target invariant and prevents auto-approval.
+
+- `GET /research-runs?awaiting_review=true` discovers successful runs with no recorded review.
+- Add `hypothesis_version_id=UUID` to filter by the researched version; normal list pagination applies.
+- `GET /research-runs/{id}` exposes `review_status`, the target, review IDs and latest recorded decision.
+- A human explicitly calls `POST /human-reviews` with `agent_run_id`, `decision`, `notes` and `reviewed_by`.
+
+Pending/running/failed research runs are `not_ready` and reject review with 409. Successful runs start `awaiting_review`; any explicit review changes discovery status to `reviewed` and exposes its decision (`approved`, `rejected`, `modified` or `escalated`). `reviewed` does not mean approved. Modification/escalation notes are available for further manual follow-up. The successful output snapshot retains the original review target; the read endpoint reports current review state.
+
+Neither research completion nor any review outcome creates Decisions, Signals, experiments, versions or state transitions. Approval does not resume execution. Reviewer identity is still a caller assertion because authentication remains out of scope. Existing non-research HumanReview behavior remains compatible.
