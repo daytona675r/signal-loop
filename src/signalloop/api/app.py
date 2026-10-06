@@ -17,7 +17,7 @@ from signalloop.services.backbone import Backbone
 
 app = FastAPI(
     title="SignalLoop",
-    version="0.1.0",
+    version="0.2.0",
     description="Manual hypothesis validation. Assumptions, evidence, observations and decisions "
     "remain distinct. No autonomous execution or authentication.",
 )

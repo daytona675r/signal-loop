@@ -2,9 +2,22 @@
 
 SignalLoop preserves what we believed, what we observed, what we tested, and why we changed direction while validating product and business ideas. PostgreSQL is its durable memory; future AI workers contribute traceable research and interpretations without replacing deterministic application rules.
 
-Foundation v0.1 is a domain-independent API for manually operating this loop. Camper / Vanlife / Overlanding is its first example vertical. All example product claims and prices are assumptions, not validated facts.
+Foundation v0.2 adds a synchronous, version-specific research worker to the accepted v0.1 API. Camper / Vanlife / Overlanding is its first example vertical. All example product claims and prices are assumptions, not validated facts.
 
-## What Foundation v0.1 provides
+## Try the v0.2 research loop in two steps
+
+```bash
+# 1. Start/update the API and PostgreSQL (applies migrations automatically).
+docker compose up -d --build
+# 2. Create an example hypothesis, retrieve real comments, and stop for your review.
+python scripts/research_demo.py
+```
+
+The demo searches **one source only: Hacker News comments via Algolia**. It creates attributable Sources, version-bound Evidence and a durable AgentRun, then stops with links for human review. It does not approve its own findings or change hypothesis state. The hypothesis is an example assumption; the retrieved comments are real source material whose relevance you must assess. Network failures leave a failed run with an inspectable ID. Repeat runs create separate records.
+
+For an existing version, run `docker compose exec -T api python -m signalloop.research --version VERSION_UUID --query 'van storage' --limit 5`. Use `GET /research-runs?awaiting_review=true` to find outputs awaiting review and `POST /human-reviews` to explicitly approve, reject, modify or escalate one. See [the worker design and limitations](docs/research-worker.md).
+
+## What the accepted v0.1 backbone provides
 
 - Hypotheses with immutable, numbered versions and a current-version pointer.
 - Centrally validated state transitions and append-only history.
@@ -13,7 +26,7 @@ Foundation v0.1 is a domain-independent API for manually operating this loop. Ca
 - Relational decision support links and provenance (`human`, `agent`, `system`).
 - FastAPI OpenAPI, PostgreSQL migrations, Docker Compose and integration tests.
 
-An assumption belongs in a hypothesis version. Evidence captures sourced information. A signal records an observed action or feedback event. An interpretation is an analysis, not a market event. A decision records what to do and why. No integrations, LLM calls, authentication or frontend are included.
+An assumption belongs in a hypothesis version. Evidence captures sourced information. A signal records an observed action or feedback event. An interpretation is an analysis, not a market event. A decision records what to do and why. The only external integration is the v0.2 read-only comment search. No LLM calls, authentication or frontend are included.
 
 ## Start locally
 
@@ -74,6 +87,7 @@ All create endpoints return `201`. Lists accept `limit` (1–200, default 100) a
 | Signals | `POST, GET /experiments/{id}/signals` |
 | Decisions | `POST, GET /hypotheses/{id}/decisions` |
 | Agent runs | `POST, GET /agent-runs`; `GET /agent-runs/{id}` |
+| Research review discovery | `GET /research-runs`; `GET /research-runs/{id}` |
 | Human reviews | `POST, GET /human-reviews`; `GET /human-reviews/{id}` |
 
 Swagger documents exact request/response fields. Missing records return `404`, invalid input or cross-hypothesis references `422`, invalid transitions and database integrity conflicts `409`, and unavailable PostgreSQL `503`. Unknown request fields are rejected. No PATCH or DELETE endpoints are provided.
@@ -114,10 +128,10 @@ See the [review briefing](docs/foundation-review.md) for a 12-minute walkthrough
 - [Install, migrate, test, lint and format](docs/development.md)
 - Original references: [database architecture](docs/hypothesis_loop_database_architecture.pdf) and [system interaction](docs/hypothesis_loop_system_interaction.pdf). The Foundation v0.1 task takes precedence over their milestone recommendations.
 
-## Deliberate limitations and next milestone
+## Deliberate limitations
 
-This is a local prototype, not a public service. Reviewer and producer identifiers are asserted, not authenticated. Human reviews persist approvals but do not dispatch actions. AgentRun endpoints store submitted snapshots; lifecycle updates, retries, idempotency and scheduling await an actual worker. Experiment creation stores a plan or manually supplied result snapshot; hypothesis transitions do not automatically start or complete experiments. Signal content relies on honest reporting of observations, not automatic truth verification.
+This is a local prototype, not a public service. Reviewer and producer identifiers are asserted, not authenticated. Human reviews persist decisions but do not dispatch actions. The research worker is synchronous, has no queue or automatic retry/deduplication, and uses no LLM. One source cannot establish market demand. Empty searches are explicit outcomes, not conclusions. Abrupt process termination or database unavailability can leave a pending/running trace requiring manual investigation.
 
-The supplied state graph has no outgoing transitions from `PAUSED`, `REJECTED` or `VALIDATED`. Success criteria are explanatory text; automated evaluation and structured metric definitions are deferred. There is no dashboard, count aggregation, integration, crawling, prospecting or outreach. Business operations must go through services, rather than direct SQL status updates.
+The supplied state graph has no outgoing transitions from `PAUSED`, `REJECTED` or `VALIDATED`. Success criteria and experiment status/results remain manual. Experiment transitions/execution, a dashboard, prospecting, outreach and production hardening remain out of scope. Hypothesis business operations must go through services rather than direct SQL.
 
-Recommended next milestone: one narrowly scoped Research Worker for one deliberately selected source/channel, using validated inputs/outputs, recording AgentRun provenance, Source and Evidence, with explicit retry/idempotency and human review semantics. It is **not** implemented here.
+The next milestone should be chosen after reviewing the first real research output; no additional source, autonomous evaluator or execution automation is implemented here.

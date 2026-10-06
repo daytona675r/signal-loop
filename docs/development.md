@@ -90,7 +90,7 @@ ruff format --check .
 ruff format .
 ```
 
-Run tests and lint before a checkpoint. Work on `foundation-v0.1`; push that branch without force-pushing, merging into main or rewriting history. Both architecture PDFs remain in `docs/` as reference material.
+Run tests and lint before a checkpoint. Work on `foundation-v0.2`; push that branch without force-pushing, merging into main or rewriting history. Both architecture PDFs remain in `docs/` as reference material.
 
 ## Calling services from a future worker
 
@@ -115,8 +115,20 @@ Future workers receive version IDs and narrow typed inputs, return validated out
 
 ## GitHub Actions quality gate
 
-`.github/workflows/foundation.yml` runs on pushes to `foundation-v0.1` and pull requests targeting it. One Ubuntu job uses Python 3.12, installs the existing `.[dev]` dependencies, builds the application's `base` Docker target through `docker compose build api`, runs both Ruff checks, and starts the existing Compose PostgreSQL service. It then applies migrations, checks Alembic drift, and runs the full PostgreSQL-backed pytest suite with its isolated schemas.
+`.github/workflows/foundation.yml` runs on pushes to `foundation-v0.1`/`foundation-v0.2` and pull requests targeting either branch. One Ubuntu job uses Python 3.12, installs the existing `.[dev]` dependencies, builds the application's `base` Docker target through `docker compose build api`, runs both Ruff checks, and starts the existing Compose PostgreSQL service. It then applies migrations, checks Alembic drift, and runs the full PostgreSQL-backed pytest suite with its isolated schemas.
 
 Every check uses normal failing exit codes; there is no `continue-on-error`. A failure fails the job and later dependent checks are skipped. An always-run GitHub job summary records build, Ruff, database, migration and test outcomes with the tested commit SHA (the merge commit for PR runs). Failure diagnostics include PostgreSQL logs. Runner-local containers and volumes are removed afterward; this cleanup does not touch a developer's database. Superseded runs on the same ref are cancelled.
 
 The workflow uses read-only repository permissions and introduces no deployment, registry publishing or external application services. Package and image downloads remain necessary for installation/builds. This supplies a visible CI status check; making it a required merge check through branch protection is a separate repository setting.
+
+
+## Foundation v0.2 worker
+
+See [research-worker.md](research-worker.md). Migration `0004` adds the optional relational AgentRun version link. The CLI runs synchronously beside the HTTP server, not in a request handler. The full pytest suite automatically includes v0.2 acceptance/failure tests; all v0.1 test files are retained unchanged.
+
+```bash
+docker compose up -d --build
+python scripts/research_demo.py
+```
+
+The demo uses the running API plus a separate CLI process inside the API image. It makes one real source request and leaves the completed result awaiting explicit human review. `python scripts/manual_loop.py` and `python scripts/review_demo.py` still demonstrate the accepted v0.1 behavior using simulated events.

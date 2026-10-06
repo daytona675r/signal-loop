@@ -1,5 +1,7 @@
 # Architecture
 
+This document records the accepted v0.1 backbone. The additive v0.2 research worker, run lifecycle and human-review boundary are specified in [research-worker.md](research-worker.md).
+
 SignalLoop Foundation v0.1 is a deterministic, domain-independent application with PostgreSQL as durable memory. Its first example vertical is camper/vanlife/overlanding; core code has no vehicle or camper-specific fields.
 
 ```text

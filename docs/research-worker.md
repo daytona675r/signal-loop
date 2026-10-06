@@ -44,3 +44,21 @@ A successful output includes `review_target: {"agent_run_id": "..."}`. The Agent
 Pending/running/failed research runs are `not_ready` and reject review with 409. Successful runs start `awaiting_review`; any explicit review changes discovery status to `reviewed` and exposes its decision (`approved`, `rejected`, `modified` or `escalated`). `reviewed` does not mean approved. Modification/escalation notes are available for further manual follow-up. The successful output snapshot retains the original review target; the read endpoint reports current review state.
 
 Neither research completion nor any review outcome creates Decisions, Signals, experiments, versions or state transitions. Approval does not resume execution. Reviewer identity is still a caller assertion because authentication remains out of scope. Existing non-research HumanReview behavior remains compatible.
+
+
+## Acceptance and operation (#9)
+
+`tests/test_research_e2e.py` demonstrates API-created hypothesis/version → synchronous worker → durable AgentRun → the real HN adapter with mocked HTTP → Source → version-bound Evidence → an explicit HumanReview. It verifies unchanged hypothesis state, decisions and experiments, then creates v2 separately and proves v1 evidence stays on v1. Failure tests cover adapter/schema errors, an actual PostgreSQL FK violation after partial persistence, and a missing version with zero side effects. Existing v0.1 tests remain unchanged. The same GitHub Actions workflow automatically runs the entire suite.
+
+For a live demonstration, start Compose and run `python scripts/research_demo.py`. It creates example assumptions, retrieves actual source comments, and prints the completed run and evidence links without submitting any approval. Human approval/rejection is a separate Swagger/API action. The fixture-based CI tests do not depend on the public source API's availability or search ranking.
+
+## Developer verification
+
+The final local and Python 3.12 container runs passed 77 tests. Alembic reports `0004 (head)` with no drift. All original v0.1 test files are unchanged. One existing Starlette/httpx TestClient deprecation warning remains; it does not affect the passing checks.
+
+A live demonstration retrieved three real comments for `van storage`, wrote three Sources and three Evidence records, and retained `DRAFT` with no human review submitted:
+
+- [Inspect the live run](http://localhost:8000/research-runs/a128ed35-571f-4a63-add1-6e4398ebe086)
+- [Inspect its evidence](http://localhost:8000/hypotheses/c704b831-7d5a-4af6-9c6d-89d26509a4ae/evidence)
+
+These links refer to the current local database. The search confirms working retrieval/provenance, not relevance or market validation. Limitations remain explicit: one source, no LLM assessment, no automatic retry/deduplication or crash recovery, unauthenticated human identifiers, and no autonomous execution after review.
