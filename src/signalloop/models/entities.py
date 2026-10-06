@@ -120,6 +120,16 @@ class HypothesisVersion(Identity, Provenance, Base):
 
 class AgentRun(Identity, Base):
     __tablename__ = "agent_run"
+    hypothesis_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "hypothesis_version.id",
+            name="fk_agent_run_hypothesis_version",
+            ondelete="RESTRICT",
+            use_alter=True,
+        ),
+        index=True,
+    )
     agent_role: Mapped[str] = mapped_column(String(200))
     run_type: Mapped[str] = mapped_column(String(100))
     prompt_version: Mapped[str | None] = mapped_column(String(200))

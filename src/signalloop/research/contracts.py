@@ -30,6 +30,7 @@ class SourceMaterial(Contract):
 
 
 class ResearchResult(Contract):
+    agent_run_id: UUID | None = None
     hypothesis_version_id: UUID
     source_type: Literal["hacker_news_comment"] = "hacker_news_comment"
     materials: list[SourceMaterial] = Field(default_factory=list, max_length=20)

@@ -190,6 +190,7 @@ class DecisionRead(Record, DecisionCreate):
 
 
 class AgentRunCreate(Contract):
+    hypothesis_version_id: UUID | None = None
     agent_role: Short
     run_type: Annotated[str, Field(min_length=1, max_length=100)]
     prompt_version: Short | None = None
