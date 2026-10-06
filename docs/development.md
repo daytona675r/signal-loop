@@ -112,3 +112,11 @@ with Session(get_engine()) as session, session.begin():
 ```
 
 Future workers receive version IDs and narrow typed inputs, return validated outputs and store run provenance. They must not directly mutate versions or status fields, keep durable state in conversation history, or use Signals for LLM conclusions. Retry policies, deduplication keys, run lifecycle updates and proposal approvals need design before running a real worker.
+
+## GitHub Actions quality gate
+
+`.github/workflows/foundation.yml` runs on pushes to `foundation-v0.1` and pull requests targeting it. One Ubuntu job uses Python 3.12, installs the existing `.[dev]` dependencies, builds the application's `base` Docker target through `docker compose build api`, runs both Ruff checks, and starts the existing Compose PostgreSQL service. It then applies migrations, checks Alembic drift, and runs the full PostgreSQL-backed pytest suite with its isolated schemas.
+
+Every check uses normal failing exit codes; there is no `continue-on-error`. A failure fails the job and later dependent checks are skipped. An always-run GitHub job summary records build, Ruff, database, migration and test outcomes with the tested commit SHA (the merge commit for PR runs). Failure diagnostics include PostgreSQL logs. Runner-local containers and volumes are removed afterward; this cleanup does not touch a developer's database. Superseded runs on the same ref are cancelled.
+
+The workflow uses read-only repository permissions and introduces no deployment, registry publishing or external application services. Package and image downloads remain necessary for installation/builds. This supplies a visible CI status check; making it a required merge check through branch protection is a separate repository setting.
