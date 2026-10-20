@@ -1,8 +1,14 @@
 # SignalLoop
 
+[![Foundation quality gate](https://github.com/daytona675r/signal-loop/actions/workflows/foundation.yml/badge.svg)](https://github.com/daytona675r/signal-loop/actions/workflows/foundation.yml)
+
 SignalLoop preserves what we believed, what we observed, what we tested, and why we changed direction while validating product and business ideas. PostgreSQL is its durable memory; future AI workers contribute traceable research and interpretations without replacing deterministic application rules.
 
 Foundation v0.2 adds a synchronous, version-specific research worker to the accepted v0.1 API. Camper / Vanlife / Overlanding is its first example vertical. All example product claims and prices are assumptions, not validated facts.
+
+This repository is a local portfolio and review artifact. Example identities,
+prices, observations and database credentials are simulated or disposable;
+they are not customer data or production secrets.
 
 ## Try the v0.2 research loop in two steps
 
@@ -119,6 +125,22 @@ Decisions use lowercase values (`continue`, `iterate`, `pause`, `reject`, `valid
 ## Review and live demonstration
 
 See the [review briefing](docs/foundation-review.md) for a 12-minute walkthrough, live inspection links, current results and limitations. Run `python scripts/review_demo.py --pause` for the narrated API demonstration. All generated business observations are simulated.
+
+## Engineering decisions
+
+- **Transactions and state transitions:** service methods perform the state
+  change and its append-only history in one transaction; invalid transitions
+  fail before a partial write can escape.
+- **Immutability and provenance:** hypothesis versions are snapshots, and
+  evidence, decisions and agent runs retain their source/version references.
+- **Relational constraints:** PostgreSQL foreign keys, unique constraints and
+  database triggers protect invariants in addition to application validation.
+- **Migrations and tests:** Alembic owns schema evolution; the Foundation CI
+  workflow runs Ruff, migration drift checks and PostgreSQL-backed tests on a
+  disposable database.
+- **Research boundary:** the current worker is synchronous and source-limited.
+  It creates traceable evidence for human review; it does not autonomously
+  approve findings or change product state.
 
 ## Design and development
 
