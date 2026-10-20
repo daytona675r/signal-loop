@@ -60,6 +60,15 @@ docker compose down
 
 Tests create and remove random isolated PostgreSQL schemas; they do not clear application data. `down` keeps the database volume. Do not use `down -v` unless you intend to destroy local data.
 
+## Reproducible hosting configuration
+
+`render.yaml` describes an optional container deployment with a managed
+PostgreSQL database. The image applies Alembic migrations before starting the
+API and exposes `/health`, `/docs` and `/openapi.json`. It is configuration only;
+no hosted URL or credentials are claimed by this repository. Before enabling
+anonymous access, add authentication, rate limits and a read-only or
+resettable demo policy.
+
 ## Repository map
 
 ```text
