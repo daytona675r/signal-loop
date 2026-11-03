@@ -2,9 +2,21 @@
 
 [![Foundation quality gate](https://github.com/daytona675r/signal-loop/actions/workflows/foundation.yml/badge.svg)](https://github.com/daytona675r/signal-loop/actions/workflows/foundation.yml)
 
-SignalLoop preserves what we believed, what we observed, what we tested, and why we changed direction while validating product and business ideas. PostgreSQL is its durable memory; future AI workers contribute traceable research and interpretations without replacing deterministic application rules.
+**Building a traceable, evidence-driven system for validating product ideas.**
 
-Foundation v0.2 adds a synchronous, version-specific research worker to the accepted v0.1 API. Camper / Vanlife / Overlanding is its first example vertical. All example product claims and prices are assumptions, not validated facts.
+*Work in progress · Foundation v0.2*
+
+SignalLoop explores how product hypotheses can be researched, tested and revised without losing the assumptions, observations, sources and decisions behind them.
+
+The longer-term direction is an AI-assisted validation platform where research agents can propose attributable findings while deterministic domain rules and explicit human review retain control over decisions.
+
+**Implemented today:** PostgreSQL-backed immutable hypothesis versions, validated state transitions, append-only history, provenance, human review, and a synchronous Hacker News comment research worker.
+
+**Planned:** broader research and evaluation orchestration, a product interface and additional validation capabilities.
+
+**Scope:** local engineering prototype; no authentication, public hosted service, autonomous decision-making or live LLM workflow.
+
+> The v0.2 worker performs real read-only Hacker News comment search through Algolia. It stores attributable source material and stops for human review; it does not run an LLM, approve evidence automatically or establish market validation.
 
 This repository is a local portfolio and review artifact. Example identities,
 prices, observations and database credentials are simulated or disposable;
@@ -62,12 +74,12 @@ Tests create and remove random isolated PostgreSQL schemas; they do not clear ap
 
 ## Reproducible hosting configuration
 
-`render.yaml` describes an optional container deployment with a managed
-PostgreSQL database. The image applies Alembic migrations before starting the
-API and exposes `/health`, `/docs` and `/openapi.json`. It is configuration only;
-no hosted URL or credentials are claimed by this repository. Before enabling
-anonymous access, add authentication, rate limits and a read-only or
-resettable demo policy.
+`render.yaml` describes an optional, non-production container blueprint with a
+managed PostgreSQL database. It is configuration only and must not be deployed
+as-is: no hosted URL or credentials are claimed by this repository. Before
+enabling any hosting, add authentication, rate limits and a read-only or
+resettable demo policy. See [the public-readiness audit](docs/public-readiness.md)
+for the current source-only publication assessment.
 
 ## Repository map
 

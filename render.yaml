@@ -1,3 +1,6 @@
+# NON-PRODUCTION BLUEPRINT — DO NOT DEPLOY AS-IS.
+# This reference configuration has no authentication, rate limits or safe
+# anonymous-data policy. Public hosting requires a separate hardening review.
 services:
   - type: web
     name: signalloop-api
